@@ -26,8 +26,25 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const db = client.db('Fast_Parcel');
+    const parcelCollection = db.collection('parcels');
+   
 
-    
+    //add new parcels
+    app.post('/addpercel', async (req,res)=>{
+        const newParcel = req.body;
+        newParcel.createdAt = new Date();
+        const result = await parcelCollection.insertOne(newParcel);
+        res.status(201).send(result);
+    })
+
+    //get all parcels
+    app.get('/parcels', async(req,res)=>{
+        const parcels = await parcelCollection.find().toArray();
+        res.send(parcels);
+    })
+
+
    
    
    
