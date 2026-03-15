@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const express = require('express')
 const cors = require('cors')
@@ -40,8 +40,26 @@ async function run() {
 
     //get all parcels
     app.get('/parcels', async(req,res)=>{
-        const parcels = await parcelCollection.find().toArray();
+        const userEmail = req.query.email;
+        const query = userEmail ? { senderEmail: userEmail} : {};
+        const options = {
+          sort: {createdAt: -1}
+        };
+
+        const parcels = await parcelCollection.find(query,options).toArray();
         res.send(parcels);
+    })
+
+    //Delete Parcel
+    app.delete('/parcels/:id', async (req,res) => {
+      const id = req.params.id;
+      const result = await parcelCollection.deleteOne({ _id: new ObjectId(id)});
+
+      if(result.deletedCount === 0){
+        return res.status(404).send({massege: 'Parcel Not Found'});
+      }
+
+      res.send(result)
     })
 
 
