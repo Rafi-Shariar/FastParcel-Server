@@ -28,6 +28,7 @@ async function run() {
     await client.connect();
     const db = client.db('Fast_Parcel');
     const parcelCollection = db.collection('parcels');
+    const usersCollection = db.collection('users');
    
 
     //add new parcels
@@ -60,6 +61,21 @@ async function run() {
       }
 
       res.send(result)
+    })
+
+    //adding users to DB
+    app.post('/users', async (req,res)=>{
+       const email = req.body.email;
+       const userExists = await usersCollection.findOne({email});
+
+       if(userExists){
+        return res.status(200).send({message: 'user already exists'});
+       }
+       else{
+        const user = req.body;
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+       }
     })
 
 
