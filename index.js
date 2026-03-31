@@ -8,6 +8,13 @@ const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
 
+//firebase admin SDK for JWT
+const admin = require("firebase-admin");
+const serviceAccount = require("./Firebase-admin-key.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 
 //mongoDB
 
@@ -29,6 +36,32 @@ async function run() {
     const db = client.db('Fast_Parcel');
     const parcelCollection = db.collection('parcels');
     const usersCollection = db.collection('users');
+
+    //custom middleware for header
+    const varifyFBToken = async(req,res,next)=>{
+      const authHeader = req.headers.authorization;
+      if(!authHeader){
+        return res.status(401).send({message: 'unauthorized access'})
+      }
+
+      const token = authHeader.split(' ')[1];
+      if(!token){
+        return res.status(401).send({message: 'unauthorized access'})
+      }
+
+      //varify the token
+      try{
+        const decoded = await admin.auth().verifyIdToken(token);
+        req.decoded = decoded;
+        next();
+      }
+      catch(error){
+        return res.status(403).send({message : 'forbidden access'})
+      }
+
+
+
+    }
    
 
     //add new parcels
@@ -40,7 +73,7 @@ async function run() {
     })
 
     //get all parcels
-    app.get('/parcels', async(req,res)=>{
+    app.get('/parcels',varifyFBToken, async(req,res)=>{
         const userEmail = req.query.email;
         const query = userEmail ? { senderEmail: userEmail} : {};
         const options = {
@@ -52,7 +85,7 @@ async function run() {
     })
 
     //Delete Parcel
-    app.delete('/parcels/:id', async (req,res) => {
+    app.delete('/parcels/:id',varifyFBToken, async (req,res) => {
       const id = req.params.id;
       const result = await parcelCollection.deleteOne({ _id: new ObjectId(id)});
 
