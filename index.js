@@ -36,6 +36,7 @@ async function run() {
     const db = client.db('Fast_Parcel');
     const parcelCollection = db.collection('parcels');
     const usersCollection = db.collection('users');
+    const ridersCollection = db.collection('riders');
 
     //custom middleware for header
     const varifyFBToken = async(req,res,next)=>{
@@ -109,6 +110,13 @@ async function run() {
         const result = await usersCollection.insertOne(user);
         res.send(result);
        }
+    })
+
+    //Add new Rider to DB
+    app.post('/riders', async(req,res)=>{
+      const rider = req.body;
+      const result = await ridersCollection.insertOne(rider);
+      res.send(result)
     })
 
 
